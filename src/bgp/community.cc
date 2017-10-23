@@ -555,19 +555,6 @@ ExtCommunityPtr ExtCommunityDB::ReplaceSiteOfOriginAndLocate(
     return Locate(clone);
 }
 
-ExtCommunityPtr ExtCommunityDB::RemoveSourceASAndLocate(
-        const ExtCommunity *src) {
-    ExtCommunity *clone;
-    if (src) {
-        clone = new ExtCommunity(*src);
-    } else {
-        clone = new ExtCommunity(this);
-    }
-
-    clone->RemoveSourceAS();
-    return Locate(clone);
-}
-
 ExtCommunityPtr ExtCommunityDB::ReplaceSourceASAndLocate(
         const ExtCommunity *src,
         const ExtCommunity::ExtCommunityValue &sas) {

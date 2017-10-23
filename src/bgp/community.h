@@ -398,7 +398,6 @@ public:
     ExtCommunityPtr RemoveVrfRouteImportAndLocate(const ExtCommunity *src);
     ExtCommunityPtr ReplaceVrfRouteImportAndLocate(const ExtCommunity *src,
             const ExtCommunity::ExtCommunityValue &vit);
-    ExtCommunityPtr RemoveSourceASAndLocate(const ExtCommunity *src);
     ExtCommunityPtr ReplaceSourceASAndLocate(const ExtCommunity *src,
             const ExtCommunity::ExtCommunityValue &sas);
     ExtCommunityPtr RemoveOriginVnAndLocate(const ExtCommunity *src);

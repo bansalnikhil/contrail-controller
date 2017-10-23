@@ -811,7 +811,7 @@ RoutingInstance::RoutingInstance(string name, BgpServer *server,
       vxlan_id_(0),
       deleter_(new DeleteActor(server, this)),
       manager_delete_ref_(this, NULL),
-      mvpn_project_manager_network_(BgpConfigManager::kMasterInstance) {
+      mvpn_project_manager_network_("mvpn_fabric") {
     if (mgr) {
         tbb::mutex::scoped_lock lock(mgr->mutex());
         manager_delete_ref_.Reset(mgr->deleter());
