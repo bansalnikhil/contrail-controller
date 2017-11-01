@@ -489,6 +489,18 @@ public:
     void set_index(int index) { index_ = index; }
     int index() const { return index_; }
 
+    const std::string &mvpn_project_manager() const {
+        return mvpn_project_manager_;
+    }
+    void set_mvpn_project_manager(const std::string &mvpn_project_manager) {
+        mvpn_project_manager_ = mvpn_project_manager;
+    }
+
+    bool mvpn_ipv4_enable() const { return mvpn_ipv4_enable_; }
+    void set_mvpn_ipv4_enable(bool mvpn_ipv4_enable) {
+        mvpn_ipv4_enable_ = mvpn_ipv4_enable;
+    }
+
 private:
     friend class BgpInstanceConfigTest;
 
@@ -503,6 +515,8 @@ private:
     bool virtual_network_pbb_evpn_enable_;
     int index_;
     int vxlan_id_;
+    std::string mvpn_project_manager_;
+    bool mvpn_ipv4_enable_;
     mutable uint64_t last_change_at_;
     StaticRouteList inet_static_routes_;
     StaticRouteList inet6_static_routes_;

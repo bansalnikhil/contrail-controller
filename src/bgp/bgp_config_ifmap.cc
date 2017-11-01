@@ -915,6 +915,26 @@ static int GetVirtualNetworkVxlanId(DBGraph *graph, IFMapNode *node) {
     return 0;
 }
 
+static string GetVirtualNetworkMvpnProjectManager(DBGraph *graph,
+                                                  IFMapNode *node) {
+    const autogen::VirtualNetwork *vn =
+        static_cast<autogen::VirtualNetwork *>(node->GetObject());
+    if (vn && vn->IsPropertySet(autogen::VirtualNetwork::PROPERTIES)) {
+        if (!vn->properties().mvpn_project_manager.empty())
+            return vn->properties().mvpn_project_manager;
+    }
+    return BgpConfigManager::kFabricInstance;
+}
+
+static bool GetVirtualNetworkMvpnIPv4Enable(DBGraph *graph, IFMapNode *node) {
+    const autogen::VirtualNetwork *vn =
+        static_cast<autogen::VirtualNetwork *>(node->GetObject());
+    if (vn && vn->IsPropertySet(autogen::VirtualNetwork::PROPERTIES)) {
+        return vn->properties().mvpn_ipv4_enable;
+    }
+    return false;
+}
+
 static void SetStaticRouteConfig(BgpInstanceConfig *rti,
     const autogen::RoutingInstance *config) {
     BgpInstanceConfig::StaticRouteList inet_list;
@@ -1169,6 +1189,10 @@ void BgpIfmapInstanceConfig::Update(BgpIfmapConfigManager *manager,
             data_.set_virtual_network_allow_transit(
                 GetVirtualNetworkAllowTransit(graph, adj));
             data_.set_vxlan_id(GetVirtualNetworkVxlanId(graph, adj));
+            data_.set_mvpn_project_manager(
+                GetVirtualNetworkMvpnProjectManager(graph, adj));
+            data_.set_mvpn_ipv4_enable(
+                GetVirtualNetworkMvpnIPv4Enable(graph, adj));
             data_.set_virtual_network_pbb_evpn_enable(
                 GetVirtualNetworkPbbEvpnEnable(graph, adj));
         }

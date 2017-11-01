@@ -318,6 +318,7 @@ BgpInstanceConfig::BgpInstanceConfig(const string &name)
       virtual_network_pbb_evpn_enable_(false),
       index_(-1),
       vxlan_id_(0),
+      mvpn_ipv4_enable_(false),
       last_change_at_(UTCTimestampUsec()) {
 }
 
@@ -333,6 +334,8 @@ void BgpInstanceConfig::Clear() {
     virtual_network_allow_transit_ = false;
     virtual_network_pbb_evpn_enable_ = false;
     vxlan_id_ = 0;
+    mvpn_ipv4_enable_ = false;
+    mvpn_project_manager_ = BgpConfigManager::kFabricInstance;
     inet_static_routes_.clear();
     inet6_static_routes_.clear();
     service_chain_list_.clear();

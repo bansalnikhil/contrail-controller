@@ -1376,6 +1376,10 @@ targetNamespace="http://www.contrailsystems.com/2012/VNC-CONFIG/0">
          <!-- Enable or disable Mirroring for virtual-network -->
          <xsd:element name='mirror-destination' type="xsd:boolean" default="false" required='optional'
              description='Flag to mark the virtual network as mirror destination network'/>
+         <!-- MVPN Project Manager network name used for ermvpn forwarding -->
+         <xsd:element name='mvpn-project-manager' type="xsd:string" default="default-domain:default-project:ip-fabric:ip-fabric" required='optional' description='MVPN Project Manager network used for ermvpn join and forwarding in the data plane'/>
+         <!-- Enable or disable ipv4-mvpn for virtual-network -->
+         <xsd:element name='mvpn-ipv4-enable' type="xsd:boolean" default="false" required='optional' description='Flag to enable mvpn service for IPv4 routes'/>
     </xsd:all>
 </xsd:complexType>
 

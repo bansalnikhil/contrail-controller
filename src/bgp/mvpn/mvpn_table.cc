@@ -89,13 +89,17 @@ DBTableBase *MvpnTable::CreateTable(DB *db, const string &name) {
 }
 
 void MvpnTable::CreateManager() {
+    if (!routing_instance()->mvpn_ipv4_enable())
+        return;
+
     if (manager_)
         return;
 
-    // Don't create the MvpnManager if ProjectManager is not present.
-    MvpnProjectManager *pm = GetProjectManager();
-    if (!pm)
+    // Don't create the MvpnManager if there is no usable ProjectManager.
+    if (!IsProjectManagerUsable())
         return;
+
+    MvpnProjectManager *pm = GetProjectManager();
     manager_ = BgpObjectFactory::Create<MvpnManager>(this, pm->table());
     manager_->Initialize();
 
@@ -116,19 +120,17 @@ void MvpnTable::DestroyManager() {
 }
 
 void MvpnTable::CreateMvpnManagers() {
-    if (!MvpnManager::IsEnabled())
-        return;
     RoutingInstance *rtinstance = routing_instance();
-    tbb::mutex::scoped_lock lock(rtinstance->manager()->mvpn_mutex());
-
     // Don't create the MvpnManager for the VPN table.
-    if (!rtinstance->IsMasterRoutingInstance() &&
-            !rtinstance->mvpn_project_manager_network().empty()) {
+    if (rtinstance->IsMasterRoutingInstance())
+        return;
+
+    tbb::mutex::scoped_lock lock(rtinstance->manager()->mvpn_mutex());
+    if (!rtinstance->mvpn_project_manager().empty()) {
         pair<MvpnProjectManagerNetworks::iterator, bool> ret =
             rtinstance->manager()->mvpn_project_managers().insert(make_pair(
-                rtinstance->mvpn_project_manager_network(), set<string>()));
+                rtinstance->mvpn_project_manager(), set<string>()));
         ret.first->second.insert(rtinstance->name());
-
         // Initialize MVPN Manager.
         CreateManager();
     }
@@ -153,14 +155,12 @@ void MvpnTable::CreateMvpnManagers() {
 }
 
 void MvpnTable::DeleteMvpnManager() {
-    if (!MvpnManager::IsEnabled())
-        return;
-    if (routing_instance()->mvpn_project_manager_network().empty())
+    if (routing_instance()->mvpn_project_manager().empty())
         return;
     tbb::mutex::scoped_lock lock(routing_instance()->manager()->mvpn_mutex());
     MvpnProjectManagerNetworks::iterator iter =
         routing_instance()->manager()->mvpn_project_managers().find(
-            routing_instance()->mvpn_project_manager_network());
+            routing_instance()->mvpn_project_manager());
     if (iter != routing_instance()->manager()->mvpn_project_managers().end()) {
         iter->second.erase(routing_instance()->name());
         if (iter->second.empty())
@@ -178,7 +178,7 @@ MvpnProjectManager *MvpnTable::GetProjectManager() {
 // with a parent project maanger network via configuration. MvpnProjectManager
 // is retrieved from this parent network RoutingInstance's ErmVpnTable.
 const MvpnProjectManager *MvpnTable::GetProjectManager() const {
-    std::string pm_network = routing_instance()->mvpn_project_manager_network();
+    std::string pm_network = routing_instance()->mvpn_project_manager();
     if (pm_network.empty())
         return NULL;
     const RoutingInstance *rtinstance =
@@ -193,7 +193,7 @@ const MvpnProjectManager *MvpnTable::GetProjectManager() const {
 }
 
 bool MvpnTable::IsProjectManagerUsable() const {
-    std::string pm_network = routing_instance()->mvpn_project_manager_network();
+    std::string pm_network = routing_instance()->mvpn_project_manager();
     if (pm_network.empty())
         return false;
     const RoutingInstance *rtinstance =

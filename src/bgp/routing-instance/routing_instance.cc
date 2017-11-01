@@ -812,7 +812,7 @@ RoutingInstance::RoutingInstance(string name, BgpServer *server,
       vxlan_id_(0),
       deleter_(new DeleteActor(server, this)),
       manager_delete_ref_(this, NULL),
-      mvpn_project_manager_network_(BgpConfigManager::kFabricInstance) {
+      mvpn_project_manager_(BgpConfigManager::kFabricInstance) {
     if (mgr) {
         tbb::mutex::scoped_lock lock(mgr->mutex());
         manager_delete_ref_.Reset(mgr->deleter());
@@ -1003,6 +1003,9 @@ void RoutingInstance::ProcessConfig() {
     virtual_network_pbb_evpn_enable_ =
         config_->virtual_network_pbb_evpn_enable();
     vxlan_id_ = config_->vxlan_id();
+    if (!config_->mvpn_project_manager().empty())
+        mvpn_project_manager_ = config_->mvpn_project_manager();
+    mvpn_ipv4_enable_ = config_->mvpn_ipv4_enable();
 
     // Always subscribe (using RTF) for RTs of PNF service chain instances.
     always_subscribe_ = config_->has_pnf();
@@ -1087,6 +1090,16 @@ void RoutingInstance::UpdateConfig(const BgpInstanceConfig *cfg) {
         notify_routes = true;
     if (virtual_network_index_ != cfg->virtual_network_index())
         notify_routes = true;
+
+    if (mvpn_project_manager_ != cfg->mvpn_project_manager()) {
+        mvpn_project_manager_ = cfg->mvpn_project_manager();
+        notify_routes = true;
+    }
+
+    if (mvpn_ipv4_enable_ != cfg->mvpn_ipv4_enable()) {
+        mvpn_ipv4_enable_ = cfg->mvpn_ipv4_enable();
+        notify_routes = true;
+    }
 
     // Trigger notification of all routes in each table.
     if (notify_routes) {

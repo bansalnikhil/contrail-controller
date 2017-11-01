@@ -181,12 +181,10 @@ public:
                              const BgpRoute *route) const;
 
     int GetOriginVnForAggregateRoute(Address::Family family) const;
-    const std::string &mvpn_project_manager_network() const {
-        return mvpn_project_manager_network_;
+    const std::string &mvpn_project_manager() const {
+        return mvpn_project_manager_;
     }
-    std::string &mvpn_project_manager_network() {
-        return mvpn_project_manager_network_;
-    }
+    std::string &mvpn_project_manager() { return mvpn_project_manager_; }
 
 private:
     friend class RoutingInstanceMgr;
@@ -239,7 +237,8 @@ private:
     boost::scoped_ptr<IRouteAggregator> inet_route_aggregator_;
     boost::scoped_ptr<IRouteAggregator> inet6_route_aggregator_;
     boost::scoped_ptr<PeerManager> peer_manager_;
-    std::string mvpn_project_manager_network_;
+    std::string mvpn_project_manager_;
+    bool mvpn_ipv4_enable_;
     RoutingPolicyAttachList routing_policies_;
 };
 

@@ -129,7 +129,7 @@ protected:
 "</config>";
         server_->Configure(config);
         task_util::WaitForIdle();
-        string n = red_->routing_instance()->mvpn_project_manager_network() +
+        string n = red_->routing_instance()->mvpn_project_manager() +
             ".ermvpn.0";
         TASK_UTIL_EXPECT_NE(static_cast<BgpTable *>(NULL),
                             server_->database()->FindTable(n));
@@ -146,7 +146,7 @@ protected:
 "</delete>";
         server_->Configure(config);
         task_util::WaitForIdle();
-        string n = red_->routing_instance()->mvpn_project_manager_network() +
+        string n = red_->routing_instance()->mvpn_project_manager() +
             ".ermvpn.0";
         TASK_UTIL_EXPECT_EQ(static_cast<BgpTable *>(NULL),
                             server_->database()->FindTable(n));
@@ -197,7 +197,7 @@ protected:
         if (pm_preconfigured_) {
             fabric_ermvpn_ = static_cast<ErmVpnTable *>(
                 server_->database()->FindTable(
-                    red_->routing_instance()->mvpn_project_manager_network() +
+                    red_->routing_instance()->mvpn_project_manager() +
                     ".ermvpn.0"));
         }
     }
