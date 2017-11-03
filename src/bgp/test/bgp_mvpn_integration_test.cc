@@ -236,6 +236,7 @@ void BgpMvpnIntegrationTest::SandeshStartup() {
     Sandesh::ConnectToCollector("127.0.0.1",
                                 sandesh_server_->GetPort());
     task_util::WaitForIdle();
+    cout << "Introspect at http://localhost:" << Sandesh::http_port() << endl;
 }
 
 void BgpMvpnIntegrationTest::SandeshShutdown() {

@@ -747,38 +747,72 @@ int MvpnPrefix::CompareTo(const MvpnPrefix &rhs) const {
 }
 
 // Populate LeafADRoute(Type4) rt_key_ from SPMSIADRoute(Type3)
-void MvpnPrefix::SetRtKeyFromSPMSIADRoute(const MvpnPrefix prefix) {
-    if (prefix.type() == SPMSIADRoute) {
-        size_t rd_size = RouteDistinguisher::kSize;
-        size_t key_size = 0;
-        size_t total_key_size = 1 + rd_size + Address::kMaxV4Bytes * 3;
-        rt_key_.resize(total_key_size);
-        rt_key_[key_size++] = integerToString(SPMSIADRoute)[0];
-        copy(prefix.route_distinguisher().GetData(),
-                prefix.route_distinguisher().GetData() + rd_size,
-                rt_key_.begin() + key_size);
-        RouteDistinguisher rd(prefix.route_distinguisher().GetData());
-        rd_ = rd;
-        key_size += rd_size;
-        const Ip4Address::bytes_type &source_bytes =
-                prefix.source().to_bytes();
-        copy(source_bytes.begin(), source_bytes.begin() +
-                    Address::kMaxV4Bytes, rt_key_.begin() + key_size);
-        Ip4Address source(prefix.source().to_ulong());
-        source_ = source;
-        key_size += Address::kMaxV4Bytes;
-        const Ip4Address::bytes_type &group_bytes = prefix.group().to_bytes();
-        copy(group_bytes.begin(), group_bytes.begin() +
-                    Address::kMaxV4Bytes, rt_key_.begin() + key_size);
-        Ip4Address group(prefix.group().to_ulong());
-        group_ = group;
-        key_size += Address::kMaxV4Bytes;
-        const Ip4Address::bytes_type &originator_bytes =
-                prefix.originator().to_bytes();
-        copy(originator_bytes.begin(), originator_bytes.begin() +
-                    Address::kMaxV4Bytes, rt_key_.begin() + key_size);
-        type_ = LeafADRoute;
-    }
+void MvpnPrefix::SetRtKeyFromSPMSIADRoute(const MvpnPrefix &prefix) {
+    assert(prefix.type() == SPMSIADRoute);
+
+    size_t rd_size = RouteDistinguisher::kSize;
+    size_t key_size = 0;
+    size_t total_key_size = 1 + rd_size + Address::kMaxV4Bytes * 3;
+    rt_key_.resize(total_key_size);
+    rt_key_[key_size++] = integerToString(SPMSIADRoute)[0];
+    copy(prefix.route_distinguisher().GetData(),
+            prefix.route_distinguisher().GetData() + rd_size,
+            rt_key_.begin() + key_size);
+    RouteDistinguisher rd(prefix.route_distinguisher().GetData());
+    rd_ = rd;
+    key_size += rd_size;
+    const Ip4Address::bytes_type &source_bytes =
+            prefix.source().to_bytes();
+    copy(source_bytes.begin(), source_bytes.begin() +
+                Address::kMaxV4Bytes, rt_key_.begin() + key_size);
+    Ip4Address source(prefix.source().to_ulong());
+    source_ = source;
+    key_size += Address::kMaxV4Bytes;
+    const Ip4Address::bytes_type &group_bytes = prefix.group().to_bytes();
+    copy(group_bytes.begin(), group_bytes.begin() +
+                Address::kMaxV4Bytes, rt_key_.begin() + key_size);
+    Ip4Address group(prefix.group().to_ulong());
+    group_ = group;
+    key_size += Address::kMaxV4Bytes;
+    const Ip4Address::bytes_type &originator_bytes =
+            prefix.originator().to_bytes();
+    copy(originator_bytes.begin(), originator_bytes.begin() +
+                Address::kMaxV4Bytes, rt_key_.begin() + key_size);
+    type_ = LeafADRoute;
+}
+
+void MvpnPrefix::SetRtKeyFromLeafADRoute(const MvpnPrefix &prefix) {
+    assert(prefix.type() == LeafADRoute);
+    size_t rd_size = RouteDistinguisher::kSize;
+    size_t key_size = 0;
+    size_t total_key_size = 1 + rd_size + Address::kMaxV4Bytes * 3;
+    rt_key_.resize(total_key_size);
+    rt_key_[key_size++] = integerToString(SPMSIADRoute)[0];
+    copy(prefix.route_distinguisher().GetData(),
+            prefix.route_distinguisher().GetData() + rd_size,
+            rt_key_.begin() + key_size);
+    RouteDistinguisher rd(prefix.route_distinguisher().GetData());
+    rd_ = rd;
+    key_size += rd_size;
+    const Ip4Address::bytes_type &source_bytes =
+            prefix.source().to_bytes();
+    copy(source_bytes.begin(), source_bytes.begin() +
+                Address::kMaxV4Bytes, rt_key_.begin() + key_size);
+    Ip4Address source(prefix.source().to_ulong());
+    source_ = source;
+    key_size += Address::kMaxV4Bytes;
+    const Ip4Address::bytes_type &group_bytes = prefix.group().to_bytes();
+    copy(group_bytes.begin(), group_bytes.begin() +
+                Address::kMaxV4Bytes, rt_key_.begin() + key_size);
+    Ip4Address group(prefix.group().to_ulong());
+    group_ = group;
+    key_size += Address::kMaxV4Bytes;
+    originator_ = prefix.GetType3OriginatorFromType4Route();
+    const Ip4Address::bytes_type &originator_bytes =
+            originator_.to_bytes();
+    copy(originator_bytes.begin(), originator_bytes.begin() +
+                Address::kMaxV4Bytes, rt_key_.begin() + key_size);
+    type_ = SPMSIADRoute;
 }
 
 string MvpnPrefix::ToXmppIdString() const {

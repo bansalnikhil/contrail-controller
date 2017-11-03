@@ -232,8 +232,6 @@ const MvpnProjectManagerPartition *MvpnTable::GetProjectManagerPartition(
 // the MvpnProjectManagerPartition object.
 void MvpnTable::UpdateSecondaryTablesForReplication(BgpRoute *rt,
         TableSet *secondary_tables) {
-    if (!manager())
-        return;
     MvpnRoute *mvpn_rt = dynamic_cast<MvpnRoute *>(rt);
     assert(mvpn_rt);
 
@@ -241,7 +239,24 @@ void MvpnTable::UpdateSecondaryTablesForReplication(BgpRoute *rt,
     if (mvpn_rt->GetPrefix().type() != MvpnPrefix::LeafADRoute)
         return;
 
-    manager()->UpdateSecondaryTablesForReplication(mvpn_rt, secondary_tables);
+    // Find Type-3 S-PMSI route from the Type-4 prefix route.
+    MvpnPrefix spmsi_prefix;
+    spmsi_prefix.SetRtKeyFromLeafADRoute(mvpn_rt->GetPrefix());
+    const MvpnRoute *spmsi_rt = FindRoute(spmsi_prefix);
+    if (!spmsi_rt)
+        return;
+    if (!spmsi_rt || !spmsi_rt->IsUsable())
+        return;
+    if (!spmsi_rt->BestPath()->IsSecondary())
+        return;
+
+    const BgpTable *table = dynamic_cast<const BgpSecondaryPath *>(
+                                spmsi_rt->BestPath())->src_table();
+    const MvpnTable *mvpn_table = dynamic_cast<const MvpnTable *>(table);
+    if (!mvpn_table || mvpn_table->IsMaster() || !mvpn_table->manager())
+        return;
+    mvpn_table->manager()->UpdateSecondaryTablesForReplication(
+                              mvpn_rt, secondary_tables);
 }
 
 // Find or create the route.
@@ -249,14 +264,14 @@ MvpnRoute *MvpnTable::FindRoute(const MvpnPrefix &prefix) {
     MvpnRoute rt_key(prefix);
     DBTablePartition *rtp = static_cast<DBTablePartition *>(
         GetTablePartition(&rt_key));
-    return static_cast<MvpnRoute *>(rtp->Find(&rt_key));
+    return dynamic_cast<MvpnRoute *>(rtp->Find(&rt_key));
 }
 
 const MvpnRoute *MvpnTable::FindRoute(const MvpnPrefix &prefix) const {
     MvpnRoute rt_key(prefix);
     const DBTablePartition *rtp = static_cast<const DBTablePartition *>(
         GetTablePartition(&rt_key));
-    return static_cast<const MvpnRoute *>(rtp->Find(&rt_key));
+    return dynamic_cast<const MvpnRoute *>(rtp->Find(&rt_key));
 }
 
 // Find or create the route.
@@ -264,7 +279,7 @@ MvpnRoute *MvpnTable::LocateRoute(const MvpnPrefix &prefix) {
     MvpnRoute rt_key(prefix);
     DBTablePartition *rtp = static_cast<DBTablePartition *>(
         GetTablePartition(&rt_key));
-    MvpnRoute *dest_route = static_cast<MvpnRoute *>(rtp->Find(&rt_key));
+    MvpnRoute *dest_route = dynamic_cast<MvpnRoute *>(rtp->Find(&rt_key));
     if (dest_route == NULL) {
         dest_route = new MvpnRoute(prefix);
         rtp->Add(dest_route);
@@ -386,6 +401,9 @@ BgpRoute *MvpnTable::RouteReplicate(BgpServer *server, BgpTable *stable,
                     !mvpn_state->spmsi_rt()->IsUsable()) {
                 return NULL;
             }
+
+            if (mvpn_state->spmsi_rt()->table() != this)
+                return NULL;
         }
     }
 
@@ -505,7 +523,8 @@ BgpRoute *MvpnTable::ReplicatePath(BgpServer *server, const MvpnPrefix &mprefix,
                 }
             }
         }
-        if (rtarget.size() > 0) {
+
+        if (rtarget.size() == 1) {
             ExtCommunityPtr ext_community = server->extcomm_db()->
                 ReplaceRTargetAndLocate(new_attr->ext_community(), rtarget);
             new_attr = server->attr_db()->ReplaceExtCommunityAndLocate(
@@ -551,16 +570,6 @@ bool MvpnTable::Export(RibOut *ribout, Route *route,
             return false;
         uinfo_slist->push_front(*uinfo);
         return true;
-    }
-    uint8_t rt_type = mvpn_route->GetPrefix().type();
-
-    if (ribout->peer_type() == BgpProto::EBGP &&
-                rt_type == MvpnPrefix::IntraASPMSIADRoute) {
-        return false;
-    }
-    if (ribout->peer_type() == BgpProto::IBGP &&
-                rt_type == MvpnPrefix::InterASPMSIADRoute) {
-        return false;
     }
     BgpRoute *bgp_route = static_cast<BgpRoute *> (route);
 
