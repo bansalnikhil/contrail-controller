@@ -89,8 +89,8 @@ DBTableBase *MvpnTable::CreateTable(DB *db, const string &name) {
 }
 
 void MvpnTable::CreateManager() {
-    if (!routing_instance()->mvpn_ipv4_enable())
-        return;
+    //if (!routing_instance()->mvpn_ipv4_enable())
+        //return;
 
     if (manager_)
         return;
@@ -233,8 +233,6 @@ const MvpnProjectManagerPartition *MvpnTable::GetProjectManagerPartition(
 void MvpnTable::UpdateSecondaryTablesForReplication(BgpRoute *rt,
         TableSet *secondary_tables) {
     if (!manager())
-        return;
-    if (IsMaster())
         return;
     MvpnRoute *mvpn_rt = dynamic_cast<MvpnRoute *>(rt);
     assert(mvpn_rt);
@@ -493,6 +491,27 @@ BgpRoute *MvpnTable::ReplicatePath(BgpServer *server, const MvpnPrefix &mprefix,
     BgpAttrPtr new_attr =
         server->attr_db()->ReplaceExtCommunityAndLocate(src_path->GetAttr(),
                                                         comm.get());
+    // Need to strip off route targets other than sender-ip:0
+    if (src_rt->GetPrefix().type() == MvpnPrefix::LeafADRoute) {
+        ExtCommunity::ExtCommunityList rtarget;
+        Ip4Address ip = src_rt->GetPrefix().GetType3OriginatorFromType4Route();
+        RouteTarget rt(ip, 0);
+        BOOST_FOREACH(const ExtCommunity::ExtCommunityValue &value,
+                      comm->communities()) {
+            if (ExtCommunity::is_route_target(value)) {
+                if (rt == RouteTarget(value)) {
+                    rtarget.push_back(value);
+                    break;
+                }
+            }
+        }
+        if (rtarget.size() > 0) {
+            ExtCommunityPtr ext_community = server->extcomm_db()->
+                ReplaceRTargetAndLocate(new_attr->ext_community(), rtarget);
+            new_attr = server->attr_db()->ReplaceExtCommunityAndLocate(
+                src_path->GetAttr(), ext_community.get());
+        }
+    }
 
     // Check whether peer already has a path.
     BgpPath *dest_path = dest_route->FindSecondaryPath(src_rt,

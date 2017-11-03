@@ -64,6 +64,12 @@ MvpnPrefix::MvpnPrefix(uint8_t type, const RouteDistinguisher &rd,
     assert((type == SharedTreeJoinRoute) || (type == SourceTreeJoinRoute));
 }
 
+Ip4Address MvpnPrefix::GetType3OriginatorFromType4Route() const {
+        size_t originator_offset = rt_key_.size() - Address::kMaxV4Bytes;
+        return Ip4Address(get_value
+                (&rt_key_[originator_offset], Address::kMaxV4Bytes));
+}
+
 int MvpnPrefix::FromProtoPrefix(const BgpProtoPrefix &proto_prefix,
     MvpnPrefix *prefix) {
     size_t rd_size = RouteDistinguisher::kSize;
@@ -124,6 +130,8 @@ int MvpnPrefix::FromProtoPrefix(const BgpProtoPrefix &proto_prefix,
         size_t expected_nlri_size = 1 + rd_size + 4 * Address::kMaxV4Bytes;
         if (nlri_size != expected_nlri_size)
             return -1;
+        size_t rd_offset = 1;
+        prefix->rd_ = RouteDistinguisher(&proto_prefix.prefix[rd_offset]);
         size_t source_offset = 1 + rd_size;
         prefix->source_ = Ip4Address(get_value(
             &proto_prefix.prefix[source_offset], Address::kMaxV4Bytes));

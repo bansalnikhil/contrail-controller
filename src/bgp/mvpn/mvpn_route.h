@@ -47,6 +47,7 @@ public:
     MvpnPrefix(uint8_t type, const RouteDistinguisher &rd, const uint32_t asn,
                const Ip4Address &group, const Ip4Address &source);
 
+    Ip4Address GetType3OriginatorFromType4Route() const;
     static int FromProtoPrefix(const BgpProtoPrefix &proto_prefix,
                                MvpnPrefix *prefix);
     static int FromProtoPrefix(BgpServer *server,
