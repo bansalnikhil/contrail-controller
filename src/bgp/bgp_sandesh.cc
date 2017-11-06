@@ -401,7 +401,7 @@ public:
             const PmsiTunnel *pmsi = val.second->pmsi_tunnel();
             os << val.first->ToString();
             if (pmsi) {
-                os << ", " << pmsi->tunnel_type();
+                os << ", " << (uint32_t)(pmsi->tunnel_type());
                 os << ", " << pmsi->identifier();
                 os << ", " << pmsi->GetLabel(true);
             }
